@@ -11,21 +11,27 @@
 
 # site:spotify.com
 
+import os
 import re
-from urllib.parse import unquote
-from pydantic import HttpUrl
+from typing import List
+from urllib.parse import unquote, urlparse
 from bs4 import BeautifulSoup
+from pydantic import HttpUrl
+
+from models.podcast import Podcast
 
 
 class PodcastScraper:
-    def extract_metadata(self, url: HttpUrl):
-        # check hostname and call function
-        pass
+    VALID_SOURCES = {"open.spotify.com", "podcasts.apple.com", "www.youtube.com"}
 
-    def extract_urls(self, search_data: str):
-        # use beautiful soup to process google search result and find podcast urls
+    def extract_metadata(self, search_data: str):
+        """
+        Extracts podcast URLs from Google search results using BeautifulSoup.
+        """
+
         soup = BeautifulSoup(search_data, "html.parser")
         podcasts = []
+
         for result in soup.select(".Gx5Zad.xpd.EtOod.pkphOe"):
             title_ele = result.select_one(".vvjwJb")
             brief_desc_ele = result.select_one(".s3v9rd")
@@ -35,7 +41,7 @@ class PodcastScraper:
             if title_ele and link_ele and brief_desc_ele and pc_source_ele:
                 title = title_ele.text.strip()
                 description = brief_desc_ele.text.strip()
-                source = pc_source_ele.text.strip()
+                source = pc_source_ele.text.split("›")[0].strip()
                 url = link_ele["href"]
                 sanitized_url = unquote(str(url))
                 regex = r"https?://[^\s&]+"
@@ -50,3 +56,65 @@ class PodcastScraper:
                 )
 
         return podcasts
+
+    def podcast(self, podcasts: List[Podcast]):
+        audiopath = []
+        for podcast in podcasts:
+            if "open.spotify.com" in str(podcast.podcast_link):
+                audiopath.append(self._download_spotify_audio(podcast)["audiopath"])
+            elif "www.youtube.com" in str(podcast.podcast_link):
+                audiopath.append(self._download_youtube_audio(podcast)["audiopath"])
+            elif "podcasts.apple.com" in str(podcast.podcast_link):
+                audiopath.append(self._download_apple_audio(podcast)["audiopath"])
+            else:
+                raise
+        return audiopath
+
+    def _download_spotify_audio(self, podcast: Podcast):
+        pass
+
+    def _download_youtube_audio(self, podcast: Podcast):
+        try:
+            import yt_dlp
+        except ImportError:
+            raise ImportError(
+                "yt-dlp dependency missing.",
+                "run `uv pip install yt-dlp` to download audio.",
+            )
+        filepath = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "audio"
+        )
+        if os.path.isfile(f"{filepath}/{str(podcast.title)}.mp3"):
+            return {
+                "audiopath": os.path.join(
+                    filepath,
+                    f"{str(podcast.title)}.mp3",
+                )
+            }
+        ytdlp_opts = {
+            "format": "bestaudio/best",
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }
+            ],
+            "paths": {"home": filepath},
+            "outtmpl": f"{filepath}/{str(podcast.title)}",
+        }
+        with yt_dlp.YoutubeDL(ytdlp_opts) as ytdl:
+            # TODO:
+            # validation
+            # ytdl.extract_info(str(podcast.podcast_link)) # return audio info
+            ytdl.download(str(podcast.podcast_link))
+        return {
+            "audiopath": os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "audio",
+                f"{str(podcast.title)}.mp3",
+            )
+        }
+
+    def _download_apple_audio(self, podcast: Podcast):
+        pass

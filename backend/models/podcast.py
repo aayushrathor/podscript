@@ -3,7 +3,7 @@ from pydantic import BaseModel, HttpUrl
 
 
 class Podcast(BaseModel):
-    podcast_link: Optional[HttpUrl] = None
+    podcast_link: HttpUrl
     title: Optional[str] = None
     description: Optional[str] = None
     artist: Optional[str] = None

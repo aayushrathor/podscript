@@ -23,7 +23,7 @@ class SearchService:
             )
             response.raise_for_status()
             search_data = response.text
-            pds = podcast_scraper.extract_urls(search_data=search_data)
+            pds = podcast_scraper.extract_metadata(search_data=search_data)
 
             # send search data to function import from utils/scraping.py to process
             # return list of podcasts
@@ -41,6 +41,9 @@ class SearchService:
                         source=pd["source"],
                     )
                 )
+
+            # returns list of audio paths
+            podcast_scraper.podcast(podcasts=podcasts)
             return podcasts
 
         except requests.exceptions.RequestException as e:
