@@ -42,9 +42,7 @@ class SearchService:
                     )
                 )
 
-            # returns list of audio paths
-            podcast_scraper.podcast(podcasts=podcasts)
-            return podcasts
+            return podcast_scraper.podcast(podcasts=podcasts)
 
         except requests.exceptions.RequestException as e:
             raise HTTPException(status_code=500, detail=f"Search Error: {str(e)}")

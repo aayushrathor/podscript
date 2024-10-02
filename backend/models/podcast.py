@@ -8,3 +8,5 @@ class Podcast(BaseModel):
     description: Optional[str] = None
     artist: Optional[str] = None
     source: Optional[str] = None
+    audiopath: Optional[str] = None
+    transcript: Optional[str] = None

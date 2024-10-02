@@ -57,18 +57,17 @@ class PodcastScraper:
 
         return podcasts
 
-    def podcast(self, podcasts: List[Podcast]):
-        audiopath = []
+    def podcast(self, podcasts: List[Podcast]) -> List[Podcast]:
         for podcast in podcasts:
             if "open.spotify.com" in str(podcast.podcast_link):
-                audiopath.append(self._download_spotify_audio(podcast)["audiopath"])
+                podcast.audiopath = self._download_spotify_audio(podcast)
             elif "www.youtube.com" in str(podcast.podcast_link):
-                audiopath.append(self._download_youtube_audio(podcast)["audiopath"])
+                podcast.audiopath = self._download_youtube_audio(podcast)
             elif "podcasts.apple.com" in str(podcast.podcast_link):
-                audiopath.append(self._download_apple_audio(podcast)["audiopath"])
+                podcast.audiopath = self._download_apple_audio(podcast)
             else:
-                raise
-        return audiopath
+                pass
+        return podcasts
 
     def _download_spotify_audio(self, podcast: Podcast):
         pass
@@ -85,14 +84,13 @@ class PodcastScraper:
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "audio"
         )
         if os.path.isfile(f"{filepath}/{str(podcast.title)}.mp3"):
-            return {
-                "audiopath": os.path.join(
-                    filepath,
-                    f"{str(podcast.title)}.mp3",
-                )
-            }
+            return os.path.join(
+                filepath,
+                f"{str(podcast.title)}.mp3",
+            )
         ytdlp_opts = {
-            "format": "bestaudio/best",
+            # "format": "bestaudio/best",
+            "filesize": 2500,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -100,7 +98,7 @@ class PodcastScraper:
                     "preferredquality": "192",
                 }
             ],
-            "paths": {"home": filepath},
+            # "paths": {"home": filepath},
             "outtmpl": f"{filepath}/{str(podcast.title)}",
         }
         with yt_dlp.YoutubeDL(ytdlp_opts) as ytdl:
@@ -108,13 +106,11 @@ class PodcastScraper:
             # validation
             # ytdl.extract_info(str(podcast.podcast_link)) # return audio info
             ytdl.download(str(podcast.podcast_link))
-        return {
-            "audiopath": os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "audio",
-                f"{str(podcast.title)}.mp3",
-            )
-        }
+        return os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "audio",
+            f"{str(podcast.title)}.mp3",
+        )
 
     def _download_apple_audio(self, podcast: Podcast):
         pass

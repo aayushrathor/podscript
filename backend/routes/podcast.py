@@ -1,9 +1,9 @@
 from fastapi import APIRouter
-from services.search import SearchService
+from services.podcast import PodcastTranscriptService
 
 podcast_router = APIRouter()
 
-searchService = SearchService()
+podcastTranscriptService = PodcastTranscriptService()
 
 
 @podcast_router.get("")
@@ -15,5 +15,5 @@ async def root():
 
 @podcast_router.get("/search")
 async def getPodcastInfo(q: str):
-    info = searchService.search(query=q.replace(" ", "%20"))
-    return {"msg": info}
+    pd = podcastTranscriptService.podcastTransript(query=q.replace(" ", "%20"))
+    return {"msg": pd}
