@@ -8,7 +8,7 @@
 - [ ] Spotify and Apple Podcast
 - [ ] Containerization
 - [ ] Frontend
-- [ ] audio compression (>=25MiB)
+- [ ] audio compression (<=25MiB)
 
 ## Setup
 
